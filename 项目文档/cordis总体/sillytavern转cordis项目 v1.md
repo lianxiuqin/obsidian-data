@@ -1,9 +1,3 @@
-好的。基于我们前面所有关于高解耦（IoC/DI）、废弃动态权重、引入手动蓝图（Blueprint）以及KV Cache命中率优化的深度探讨，我为你整理了一份完整的 Cordis 项目架构开发方案。
-
-注：我按行业标准将项目名修正为 Cordis（基于 Node.js 的模块化框架生态），并为你梳理了清晰的分层逻辑。
-
-Cordis 项目架构开发方案 v2.0（高解耦·缓存友好型）
-
 一、 项目核心基建层（非插件，项目内核）
 
 此层不依赖任何业务插件，负责应用的生命周期与基础环境。
@@ -11,11 +5,11 @@ Cordis 项目架构开发方案 v2.0（高解耦·缓存友好型）
 模块 职责描述 关键设计
 0. IoC 容器（启动层） 应用的唯一入口，负责扫描、实例化、依赖注入（DI）所有插件。 基于 Reflect Metadata 实现自动装配，禁止插件间 new 实例化。
 
-事件总线（Event Bus） 模块间通信的唯一介质。 仅允许 Pub/Sub，禁止直接引用其他插件的 API（除非通过 Interface）。
+1. 事件总线（Event Bus） 模块间通信的唯一介质。 仅允许 Pub/Sub，禁止直接引用其他插件的 API（除非通过 Interface）。
 
-配置中心（Config Center） 统一管理 .env、CLI 参数、用户配置。 支持运行时 watch 更新，所有插件通过 ctx.config 拉取。
+2. 配置中心（Config Center） 统一管理 .env、CLI 参数、用户配置。 支持运行时 watch 更新，所有插件通过 ctx.config 拉取。
 
-自定义构建工具（Build Tool） 基于 Esbuild/Rollup 封装，防止重复打包。 开启 sideEffects: false，支持 Tree Shaking。
+3. 自定义构建工具（Build Tool） 基于 Esbuild/Rollup 封装，防止重复打包。 开启 sideEffects: false，支持 Tree Shaking。
 
 二、 插件核心契约层（接口定义，无实现）
 
@@ -56,5 +50,3 @@ Cordis 项目架构开发方案 v2.0（高解耦·缓存友好型）
 21. 结构化日志追踪（新增） 全链路日志（Trace ID）。 每个请求生成唯一 TraceID，贯穿 Prompt 构建 -> LLM 请求 -> 存储落库。
 22. 错误边界与降级（新增） 插件崩溃后的容灾兜底。 若 LLM 请求失败，自动返回本地 Mock 数据或友好报错，保证 UI 不白屏。
 23. 会话快照（新增） 切换对话时的状态打包。 将当前输入框草稿、滚动位置、未发送的临时数据序列化。
-
-这是设计的一个类sillytavern软件。请问架构设置和插件设置合理吗
