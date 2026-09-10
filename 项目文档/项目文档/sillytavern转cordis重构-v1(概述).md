@@ -25,7 +25,7 @@
 
    ```json
    {
-     "st": {
+     "ct": {
        "bundle": {
          "path": "./cordis.patch.yml"
        }
@@ -37,7 +37,7 @@
 
    ```json
    {
-     "st": {
+     "ct": {
        "client": {
          "platform": "web",
          "inject": ["plugin-name"],
@@ -57,7 +57,7 @@
 
    ```json
    {
-     "st": {
+     "ct": {
        "commands": [
          {
            "command": "name",
