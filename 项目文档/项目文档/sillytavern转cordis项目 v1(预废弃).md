@@ -1,3 +1,23 @@
+> ⚠️ **本文档已废弃，不具权威性。**
+>
+> 本文描述的是早期 v1 设想，其中以下主张**均未采用**：
+>
+> | 本文主张 | 现行设计 |
+> |---|---|
+> | Reflect Metadata 自动装配 | `inject` + Context + `intercept` |
+> | 事件总线为唯一通信介质，禁止直接引用其他插件 API | `ctx.<key>` 直接取服务 |
+> | 配置中心 / `ctx.config` | `ctx.intercept` |
+> | Esbuild / **Rollup** + `sideEffects:false` | 纯 esbuild + `treeShaking: true` |
+> | HMR 作为基础插件发 `reload:plugin` 事件 | 由 Cordis Effect 回滚实现 |
+> | 内核内置拓扑排序 | 由 `@cordisjs/plugin-loader` 负责 |
+> | `priority` 字段、Prompt 注册池、蓝图体系 | 不存在 |
+> | 「核心基建层」「IoC 容器」「插件注册表」等术语 | 已废弃：启动与构建归「启动层 + 构建工具」，拓扑排序归 plugin-loader |
+>
+> 现行设计请以 `项目文档/cordis-tavern项目设计/` 与 `开发文档/首期开发/` 下的文档为准。
+> 保留本文仅为记录设计演进过程，**请勿从本文取词用于新文档**。
+
+---
+
 一、 项目核心基建层（非插件，项目内核）
 
 此层不依赖任何业务插件，负责应用的生命周期与基础环境。
