@@ -7,7 +7,11 @@ tags:
 
 # ct-host-web v2
 
-> 承接 [[ct-host-web|ct-host-web]] 的最简版现状（HTTP 服务 + 配置四键，路由注册 / fallback 未实现），本页描述 v2 设计：实现[[插件]]注册与 **[[兜底路由|fallback]]** 接口。
+状态：🟢 已实现（0.0.2-rc；`webServer.hostRegister` / `fallbackRegister` 已落地）
+
+> 承接 [[ct-host-web|ct-host-web]]。本页为 v2 设计正典：实现插件**路由注册**与 **[[兜底路由|fallback]]** 接口。实现以插件仓库 `src/router.ts` + `webServer` provide 为准。
+>
+> **[已订正]** 早期草稿写「provide 服务名 hostRegister」；实现为**服务 `webServer`、方法 `hostRegister` / `fallbackRegister`**（与 host README、消费方 `inject: ['webServer']` 一致）。
 
 ## 目的
 
