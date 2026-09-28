@@ -1,0 +1,1 @@
+功能，在所有客户端插件均完成准备后，直接创建一个新react context，并正常通过ctx.slot.renderSlot渲染根插槽，完成页面的渲染。这也是直接依赖react的主要插件
