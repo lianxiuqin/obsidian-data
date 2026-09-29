@@ -127,8 +127,14 @@ $CT_HOME/
     └── commands.yml                  # []（环境级命令注册表）
 ```
 
-8. **装配内核**：把 `bootstrap/cli/kernel.json` 里的 5 个内核包按**精确版本**合并进 `$CT_HOME/package.json` 的 `dependencies`，然后在该目录跑 `pnpm install`；装完**复核**每个包自己的 `package.json` 版本是否等于目标版本（判据是包自身，不是 `$CT_HOME/package.json` 写了什么 —— 两者分叉正是「写了却没装上」）。
+8. **按域发现并安装官方包**（**不再读预设表**）：
+   - `GET https://registry.npmjs.org/-/org/cordis-tavern/package` → 包名列表（只有名字，无版本）
+   - 对每个包 `GET https://registry.npmjs.org/<name>` → `dist-tags.latest`（精确版本）
+   - **依次** `pnpm add name@version` 进 `$CT_HOME`（默认跳过宿主自身 `@cordis-tavern/cordis-tavern`）
+   - `@cordis-tavern/ct-*` 登记进环境 `ct.profile` 并全量重放命令表
 9. **行级改写**仓库根 `.env` 的 `CT_HOME`（存在则替换该行，否则追加；其余行原样保留）
+
+> **与 `ct update` 的分工**：`ct update` 仍按 `bootstrap/cli/kernel.json` 升级**内核五包**（版本钉在表里）；`ct init` 的包集合来自 **registry org API**（随发布变化）。`kernel.json` 仍由 vendor.mjs 与 `ct update` 共读。
 
 **为什么 `ct init` 要装内核**：内核（cordis / plugin-loader / plugin-include / schemastery / cosmokit）**只存一份**，就住在数据文件夹里；宿主与插件都从它解析，单实例因此由构造保证（见[[项目文档/项目设计文档/内核设计/启动层|启动层]]的「内核根」）。主包**不**把内核声明为运行时依赖 —— 否则下游装主包时会拉进第二份。
 
@@ -287,7 +293,7 @@ pnpm 以「上溯到的 workspace root」为 lockfile 与 store 的归属，与 
 | `bootstrap/cli/commands/plugin.ts` | `dist/cli/commands/plugin.js` |
 | `bootstrap/cli/commands/update.ts` | `dist/cli/commands/update.js` |
 | `bootstrap/cli/commands.yml` | `dist/cli/commands.yml`（`file:` 由 `.ts` 改写为 `.js`） |
-| `bootstrap/cli/kernel.json` | `dist/cli/kernel.json`（内核版本表，**`ct init` / `ct update` 读它**） |
+| `bootstrap/cli/kernel.json` | `dist/cli/kernel.json`（内核版本表，**`ct update` 与 vendor.mjs 读它**；`ct init` 已改走 org API） |
 
 **为什么命令实现必须是独立入口**：它们是运行时动态 `import()` 的目标，只打进 `cli/index.js` 是不够的 —— 这是本项目最容易漏的一步。
 
@@ -312,7 +318,8 @@ bootstrap/cli/
 │   ├── kernel.ts          # 内核装配：读版本表 / 写内核依赖 / 差异比对
 │   └── plugin.ts          # profileDir / ct.profile 读写 / 参数解析 / 命令表重放
 └── commands/
-    ├── init.ts            # ct init（建骨架 + 装配内核）
+    ├── init.ts            # ct init（建骨架 + org API 发现安装）
+    ├── actions/org-api.ts # registry.npmjs.org org 包发现（ct init 用）
     ├── plugin.ts          # ct plugin 子命令分发
     └── update.ts          # ct update（升级内核副本）
 ```
