@@ -7,7 +7,7 @@ tags:
 
 # ct-host-web v2
 
-状态：🟢 已实现（0.0.2-rc；`webServer.hostRegister` / `fallbackRegister` 已落地）
+状态：🟢 已实现（`0.1.0-rc.1`；`webServer.register` / `fallbackRegister` 已落地 —— v3 将 `hostRegister` 更名为 `register`）
 
 > 承接 [[ct-host-web|ct-host-web]]。本页为 v2 设计正典：实现插件**路由注册**与 **[[兜底路由|fallback]]** 接口。实现以插件仓库 `src/router.ts` + `webServer` provide 为准。
 >
