@@ -1,6 +1,6 @@
 # ct-frontend-static
 
-状态：🟢 已实现（**0.0.1-rc**；SPA fallback —— 未具名路由回退主页、HTTP 200，**不读文件**）
+状态：🟢 已实现（**0.1.0-rc.1**；SPA fallback —— 未具名路由回退主页、HTTP 200，**不读文件**）
 
 > 现状：插件仓库 `cordis-tavern-plugin/ct-frontend-static/`。共性概念与通用对接约定见 [[项目文档/项目设计文档/插件设计/插件概念总览|插件概念总览]]。
 > 与 client-found 的分工：本插件只申领 host **fallback 槽**；真正吐 index + SPA 壳的是 [[ct-client-found|ct-client-found]]（exact `homepage`，HTML 经 [[ct-index-renderer]] 事件线组装）；客户端分发见 [[ct-client-found-v2|v2]]。本插件**不读文件**、不消费任何 index 磁盘路径服务（client-found 已删除 `distIndex` provide）。
