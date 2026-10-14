@@ -1,6 +1,6 @@
 # ct-ui-theme
 
-状态：🟢 已实现（`0.0.1-alpha.1`；v1 样式表注入流程；见 `cordis-tavern-plugin/ct-ui-theme/`）
+状态：🟢 已实现（`0.2.0-rc.1`；persist 持久化 + webServer 传输 + index-inject 首帧背景色；见 `cordis-tavern-plugin/ct-ui-theme/`）
 
 主要目的：构建一个统一的ui token库通过服务暴露，让全局主题相同。
 主要调用服务
@@ -11,6 +11,8 @@ node侧cordis
 浏览器侧cordis：
 提供服务theme
 v1版本暂时不提供任何修改主题注册主题的方法，先把构建样式表，react组件全局引用成功流程跑通
+
+**0.2.0-rc.1 实测补充**：Node 侧还经 `index-inject`（`global` placement）注入 `--ct-color-bg` 首帧背景色，消除多插件加载闪烁；主题状态落盘 `$CT_HOME/data/ui-theme/theme.json`（`usingTheme` 字段预留多主题仓位，当前只支持 `dark`）。
 
 构建样式表步骤
 1. 使用CSSStyleSheet()创建空全局样式表
