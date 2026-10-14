@@ -7,7 +7,7 @@ tags:
 
 # ct-ui-slots
 
-状态：🟢 已实现（`0.1.0-rc.1`；服务面 `register()` / `renderSlot(name, owner)`，v1 仅 `single`，`root` 为预设占位插槽）
+状态：🟢 已实现（`0.1.1-alpha.1`；服务面 `register()` / `renderSlot(name, owner)` / `inject()`，v2 另有 `list` 槽 —— v1 仅 `single`，`root` 为预设占位插槽；见 [[ct-ui-slots-v2|v2]]）
 
 ## 目标
 
