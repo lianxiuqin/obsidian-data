@@ -8,7 +8,7 @@ tags:
 
 # ct-host-web
 
-状态：🟢 已实现（0.0.2-rc；最简版 + **webServer 路由 / fallback** 已落地）
+状态：🟢 已实现（`0.1.0-rc.1`；最简版 + **webServer 路由 / fallback** 已落地；服务面正典见 [[ct-host-web-v3|v3]]）
 
 > 现状：插件仓库 `cordis-tavern-plugin/ct-host-web/` —— HTTP 服务 + 配置四键（含 CIDR 白名单）+ **路由注册 / fallback**（服务 `webServer`：`hostRegister` / `fallbackRegister`，见 [[ct-host-web-v2|v2]]）。
 > 共性概念与通用对接约定见 [[项目文档/项目设计文档/插件设计/插件概念总览|插件概念总览]]。
