@@ -9,7 +9,7 @@ tags:
 
 # ct-client-found：前端插件发现与加载
 
-状态：🟢 已实现（`@cordis-tavern/ct-client-found@0.0.2-rc` 已发布 registry；插件仓库 `cordis-tavern-plugin/ct-client-found/`）
+状态：🟢 已实现（`@cordis-tavern/ct-client-found@0.1.0-rc.1`；插件仓库 `cordis-tavern-plugin/ct-client-found/`）
 
 > 现状：浏览器内核 + Node 插件包均已落地。实现 spec 见插件仓库 `ct-client-found/docs/ct-client-found-设计.md`。
 > 本页为**设计正典**（应该是什么）；字段读取方与发布细节以实现为准。
@@ -168,7 +168,7 @@ cjs 表由本插件直接提供。本插件是**发现并加载前端页面的�
 | 项 | 值 |
 | --- | --- |
 | 包名 | `@cordis-tavern/ct-client-found` |
-| 版本 | **0.0.2-rc**（已发布 registry，`latest`） |
+| 版本 | **0.1.0-rc.1** |
 | insert id | `clientFound` |
 | `ct.bundle.path` | `./dist/cordis.patch.yml`（发布物仅 `dist/`） |
 | `files` | `["dist/"]`（含 `dist/seed/*`） |
