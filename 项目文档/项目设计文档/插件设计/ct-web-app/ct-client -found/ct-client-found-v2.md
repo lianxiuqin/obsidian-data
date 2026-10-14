@@ -1,6 +1,6 @@
 # ct-client-found v2：index-inject 事件线 + SPA 壳 + CT_SEED 真库
 
-状态：🟢 已实现（随 `@cordis-tavern/ct-client-found@0.0.2-rc` 源码落地；**`distIndex` 服务已删除**）
+状态：🟢 已实现（随 `@cordis-tavern/ct-client-found` 源码落地，当前 **0.1.0-rc.1**；**`distIndex` 服务已删除**）
 
 > 来源演进：原设计「通过 ctx.provide 注册 distIndex」→ **做减法改为** ct-index-renderer 事件线；并入 SPA 壳与 CT_SEED 完整化。
 > 一期发现 / 拓扑 / BOOT / 懒加载契约不动。宿主路由见 [[ct-host-web-v2]]；index 插入正典见 [[ct-index-renderer]]；未具名回退见 [[ct-frontend-static]]。
