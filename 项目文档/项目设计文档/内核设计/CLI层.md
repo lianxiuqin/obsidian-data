@@ -6,11 +6,12 @@
 
 CLI 层是 cordis-tavern 的命令行入口，发布为 `ct` 命令（`package.json` 的 `bin: { ct: "dist/cli/index.js" }`）。
 
-它做三件事：
+它做四件事：
 
 1. **调度命令**：把 `argv` 分派到一个命令实现文件，由该文件自己处理后续参数
 2. **管理环境**：`ct init` 建立 `$CT_HOME` 骨架
 3. **管理插件**：`ct plugin add / remove / update / list` —— 通过 pnpm 安装插件、登记 `ct.profile`、并重建命令表
+4. **启动环境**：`ct <环境名>`（如 `ct web`）—— 注册表未命中时严格匹配环境名并启动对应 profile
 
 源码入口 `bootstrap/cli/index.ts`。设计模型是 **git 式调度**：主 CLI 只持有「命令名 → 处理函数（文件）」的表，**子命令由命令自己的文件分发**，主文件不管子命令语义。
 
@@ -43,7 +44,7 @@ argv → 命令名 + 参数
 | 情况 | 行为 |
 |---|---|
 | 无参数 | 打印用法与可用命令，exit 1 |
-| 未命中命令 | `unfound command: <name>`，exit 1 |
+| 未命中命令 | 先严格匹配环境名（`ct <环境名>`）；两者都未命中 → `未找到命令或环境: <name>`，exit 1 |
 | 注册项缺 `file` 字段 | 抛错，exit 1 |
 | 命令文件不存在 / 不是默认导出函数 | 抛错，exit 1 |
 | 命令实现抛错 | 消息打到 stderr，exit 1 |
@@ -79,7 +80,7 @@ argv → 命令名 + 参数
   explain: 管理插件（add / remove / update / list）
   file: commands/plugin.ts
 - command: update
-  explain: 升级数据文件夹里的内核副本
+  explain: 升级或下载官方包（可选 --self 同时升级宿主）
   file: commands/update.ts
 ```
 
@@ -90,7 +91,7 @@ argv → 命令名 + 参数
 - 查找顺序：环境级 → bootstrap 级，**命中即止**（实现遮蔽语义）。
 - `CT_HOME` 未设置时**跳过环境级** —— 未初始化状态下调度器必须可用，否则 `ct init` 鸡生蛋。
 
-> **当前环境从哪来**：读仓库根 `.env` 的 **`CT_PROFILE`**，缺省 `web`（见[[项目文档/项目设计文档/内核设计/存储层|存储层]]）。因此 `ct plugin add -p dev` 装出来的插件，其命令写进 `profile/dev/commands.yml` 并被 CLI 读到 —— 安装与查找用的是同一个环境名。
+> **当前环境从哪来**：读 `~/cordis-tavern/.env` 的 **`CT_PROFILE`**，缺省 `web`（见[[项目文档/项目设计文档/内核设计/存储层|存储层]]）。因此 `ct plugin add -p dev` 装出来的插件，其命令写进 `profile/dev/commands.yml` 并被 CLI 读到 —— 安装与查找用的是同一个环境名。
 >
 > `CT_PROFILE` **不由 `ct init` 写入**；形状非法（`.` / `..` / 含路径分隔符或盘符）**直接报错**，而不是静默退回 `web`。
 >
@@ -132,9 +133,9 @@ $CT_HOME/
    - 对每个包 `GET https://registry.npmjs.org/<name>` → `dist-tags.latest`（精确版本）
    - **依次** `pnpm add name@version` 进 `$CT_HOME`（默认跳过宿主自身 `@cordis-tavern/cordis-tavern`）
    - `@cordis-tavern/ct-*` 登记进环境 `ct.profile` 并全量重放命令表
-9. **行级改写**仓库根 `.env` 的 `CT_HOME`（存在则替换该行，否则追加；其余行原样保留）
+9. **行级改写** `~/cordis-tavern/.env` 的 `CT_HOME`（存在则替换该行，否则追加；其余行原样保留）
 
-> **与 `ct update` 的分工**：`ct update` 仍按 `bootstrap/cli/kernel.json` 升级**内核五包**（版本钉在表里）；`ct init` 的包集合来自 **registry org API**（随发布变化）。`kernel.json` 仍由 vendor.mjs 与 `ct update` 共读。
+> **与 `ct update` 的分工**：`ct update` 同步**官方整集**（org API → `$CT_HOME`，缺则装、旧则升）；`ct init` 的首次装包与它同一发现源。`kernel.json` 的 `version` 仍由 vendor.mjs 用于上游拉取。
 
 **为什么 `ct init` 要装内核**：内核（cordis / plugin-loader / plugin-include / schemastery / cosmokit）**只存一份**，就住在数据文件夹里；宿主与插件都从它解析，单实例因此由构造保证（见[[项目文档/项目设计文档/内核设计/启动层|启动层]]的「内核根」）。主包**不**把内核声明为运行时依赖 —— 否则下游装主包时会拉进第二份。
 
@@ -148,18 +149,24 @@ $CT_HOME/
 
 ### `ct update`
 
-升级**数据文件夹里的内核副本**。**不接受任何参数**。
+**升级或下载 cordis-tavern 官方包**到 `$CT_HOME`；可选 **`--self`** 同时升级宿主自身。
 
 ```
-  （无输出 = 无差异）  内核已是最新（5 个包）: <$CT_HOME>
-  @cordis-tavern/cordis: 4.0.0-rc.10 → 4.0.0-rc.11
-  ...
-  已更新内核: <$CT_HOME>
+用法: ct update [--self]
 ```
 
-流程：读 `.env` 的 `CT_HOME`（未初始化 → 报错）→ 守卫目录存在（不存在时给的是「CT_HOME 指错了」而不是裸 ENOENT）→ 读 `kernel.json` → 逐个读 `$CT_HOME/node_modules/<包>/package.json` 得到**已装版本** → 与目标比对 → 无差异即结束（**不触网**）→ 有差异则合并写回 `$CT_HOME/package.json` → `pnpm install` → **复核**是否真的就位。
+| 形态 | 行为 |
+|---|---|
+| `ct update` | registry org API 发现官方包 → 逐个 `pnpm add name@latest` 进 `$CT_HOME`（**缺则下载、旧则升级**）；`@cordis-tavern/ct-*` 登记 `ct.profile` 并全量重放命令表 |
+| `ct update --self` | 同上，**再**把宿主 `@cordis-tavern/cordis-tavern` 升到 latest（全局：`pnpm add -g`） |
 
-它**不动** `ct.profile`、环境目录与插件包 —— 插件的升级是 `ct plugin update`。
+流程：读 `~/cordis-tavern/.env` 的 `CT_HOME` → 守卫目录存在 → `GET …/-/org/cordis-tavern/package` 发现包 → 内核名写入 `$CT_HOME/package.json`（`latest` 占位）→ 逐包 `pnpm add` → 插件登记 + 命令表重放 → 复核内核 / 插件是否就位 →（`--self` 时）全局升级宿主。
+
+> **[决策] 官方包目标永远是 `latest` 标签**：与 `ct init` 同一发现源（org API），不钉版本。`kernel.json` 的 `version` / `publishVersion` 只服务 **vendor 加工**与阅读。
+>
+> **与 `ct plugin update` 的分工**：`ct update` 同步**官方整集**；`ct plugin update` 升级**单个已登记**插件。
+>
+> **`--self` 说明**：宿主是 `ct` 命令本体，不进 `$CT_HOME`。Windows 上运行中的 `ct` 可能锁文件，失败时给出可行动提示（关进程 / 手动 `pnpm add -g`）。
 
 
 ### `ct plugin`
@@ -184,12 +191,14 @@ $CT_HOME/
 
 `-g` 与 `-p` 必须**恰好指定一个**。
 
-**`add` 与 `update` 的差别只有两条守卫**，且都由子命令名就地派生：
+**`add` 与 `update` 的差别**：
 
-| 子命令 | 环境不存在时 | 要求已登记 |
-|---|---|---|
-| `add` | 自动建骨架 | 否 |
-| `update` | 报错 | 是 |
+| 子命令 | 环境不存在时 | 要求已登记 | 安装语义 |
+|---|---|---|---|
+| `add` | 自动建骨架 | 否 | **契约预检**（npm pack 验包）+ **钉版** `name@version` |
+| `update` | 报错 | 是 | **`pnpm up --latest`**（不钉版本；未装在本根则 `pnpm add name@latest`） |
+
+> **[决策] `update` 与 `ct update` 同一逻辑**：永远取 registry 的 `latest` 标签，不做版本比对。官方插件不做破坏性升级；契约由随后的 `rebuildTable → readContract` 收口。`add` 仍预检 + 钉版，保证「验的与装的同一版」。
 
 **动词判据**：`installedHere = declaredIn(installRoot, pkg)` —— pnpm 收到的是 `update` 还是 `install`，看的是「它**装在这个安装根**里吗」，**不是**「它登记在列吗」。两者是两件事，混用会静默做错动作。
 
@@ -206,6 +215,19 @@ $CT_HOME/
 **`list`**：逐行打印该环境的 `ct.profile`；环境不存在则报错。路径**必须**经 `profileDir()` 构造——它是唯一带穿越守卫的路径构造者，自行 `path.join` 会让 `ct plugin list ../..` 读到 `$CT_HOME` 的父目录且不报错。
 
 **`remove`**：两种「找不到」分开报 —— 「不在 `ct.profile` 里」（没登记）与「不在安装根的 `package.json` 依赖表里」（没装在这个根）。不分会让用户拿到 pnpm 的 `ERR_PNPM_CANNOT_REMOVE_MISSING_DEPS`，不可行动。
+
+### `ct <环境名>`（启动入口）
+
+注册表未命中时的**严格匹配启动**：`argv[0]` 必须精确等于 `$CT_HOME/profile/` 下已存在的环境目录名，否则报「未找到命令或环境」。**无回退**（不存在「未命中就当任意字符串去启动」）。
+
+| 步骤 | 行为 |
+|---|---|
+| 多余参数 | 拒绝（`ct <profile>` 不接受额外参数） |
+| 穿刺守卫 | 先过 `profileDir()`（`..` / 分隔符 / 盘符） |
+| 严格相等 | `argv[0]` 必须出现在 `allProfiles()` 列表中 |
+| 启动 | 调启动层 `start({ env })`，打印就绪后挂起直到 Ctrl+C |
+
+实现落点：`bootstrap/cli/commands/start.ts`（不在 `commands.yml` 里 —— 它是调度器的兜底分支，不是注册表命令）。
 
 ---
 
@@ -309,10 +331,10 @@ pnpm 以「上溯到的 workspace root」为 lockfile 与 store 的归属，与 
 bootstrap/cli/
 ├── index.ts               # 调度器（bin 指向它）
 ├── commands.yml           # bootstrap 级命令注册表
-├── kernel.json            # 内核版本表（唯一真相源；与 vendor.mjs 共读）
+├── kernel.json            # 内核包表（publishName 列表 + vendor 加工用的 version）
 ├── actions/
 │   ├── registry.ts        # 注册表读写 + 两级查找
-│   ├── project.ts         # 仓库根锚定 / .env 读写 / CT_HOME 与 CT_PROFILE 解析 / 输入清洗
+│   ├── project.ts         # 配置目录（~/cordis-tavern）定位 / .env 读写 / CT_HOME 与 CT_PROFILE 解析 / 输入清洗
 │   ├── pnpm.ts            # pnpm 调用 + workspace 守卫
 │   ├── contract.ts        # 插件契约解析（PluginContract）
 │   ├── kernel.ts          # 内核装配：读版本表 / 写内核依赖 / 差异比对
@@ -321,5 +343,6 @@ bootstrap/cli/
     ├── init.ts            # ct init（建骨架 + org API 发现安装）
     ├── actions/org-api.ts # registry.npmjs.org org 包发现（ct init 用）
     ├── plugin.ts          # ct plugin 子命令分发
-    └── update.ts          # ct update（升级内核副本）
+    ├── start.ts           # ct <环境名>（严格匹配启动，调度器兜底）
+    └── update.ts          # ct update（同步官方包；--self 升级宿主）
 ```
