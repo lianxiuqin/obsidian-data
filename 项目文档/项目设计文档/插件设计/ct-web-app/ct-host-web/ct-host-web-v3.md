@@ -1,6 +1,6 @@
 # ct-host-web v3
 
-状态：🟢 已实现（服务面收敛为 `webServer.register` / `fallbackRegister`；前缀段边界匹配；原生 handler）
+状态：🟢 已实现（`0.1.0-rc.1`；服务面收敛为 `webServer.register` / `fallbackRegister`；前缀段边界匹配；原生 handler）
 
 > 承接 [[ct-host-web-v2|v2]]。本页为 **v3 正典**：统一服务 API、规范前缀匹配与 handler 生命周期。
 > 实现以插件仓库 `src/index.ts` + `src/router.ts` 为准。
